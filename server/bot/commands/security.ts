@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 import { hasPermission } from '../utils/permissions';
 import { logger } from '../utils/logger';
 import { storage } from '../../storage';
@@ -9,7 +9,7 @@ export const securityStatsCommand = {
     .setName('securitystats')
     .setDescription('Shows current security status and recent threats'),
   
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply();
     
     try {
@@ -91,7 +91,7 @@ export const lockdownCommand = {
         .setDescription('Duration in minutes (default: 10)')
         .setRequired(false)),
   
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     // Check if user has permission to use this command
     if (!hasPermission(interaction, 'MANAGE_GUILD')) {
       return interaction.reply({
@@ -123,22 +123,26 @@ export const lockdownCommand = {
       // Start lockdown - modify permissions for all channels
       // We'll only change @everyone permission for text channels
       const textChannels = guild.channels.cache.filter(channel => 
-        channel.isTextBased() && !channel.isThread()
+        channel.isTextBased() && !channel.isThread() && 'permissionOverwrites' in channel
       );
       
       let lockedChannels = 0;
       
-      for (const [_, channel] of textChannels) {
+      // Convert to array for iteration (fixes Collection iteration error)
+      const channelsArray = Array.from(textChannels.values());
+      for (const channel of channelsArray) {
         try {
-          // Save current permissions for restoration later
-          const currentPerms = channel.permissionOverwrites.cache.get(guild.id);
-          
-          // Set new permissions to deny @everyone from sending messages
-          await channel.permissionOverwrites.edit(guild.id, {
-            SendMessages: false
-          });
-          
-          lockedChannels++;
+          if ('permissionOverwrites' in channel) {
+            // Save current permissions for restoration later
+            const currentPerms = channel.permissionOverwrites.cache.get(guild.id);
+            
+            // Set new permissions to deny @everyone from sending messages
+            await channel.permissionOverwrites.edit(guild.id, {
+              SendMessages: false
+            });
+            
+            lockedChannels++;
+          }
         } catch (err) {
           logger.error(`Failed to lock channel ${channel.id}:`, err);
         }
@@ -175,12 +179,15 @@ export const lockdownCommand = {
       setTimeout(async () => {
         try {
           // Unlock all channels
-          for (const [_, channel] of textChannels) {
+          for (const channel of channelsArray) {
             try {
-              // Remove the send messages restriction
-              await channel.permissionOverwrites.edit(guild.id, {
-                SendMessages: null
-              });
+              // Only try to edit permissions for channels that have the permission API
+              if ('permissionOverwrites' in channel) {
+                // Remove the send messages restriction
+                await channel.permissionOverwrites.edit(guild.id, {
+                  SendMessages: null
+                });
+              }
             } catch (err) {
               logger.error(`Failed to unlock channel ${channel.id}:`, err);
             }
@@ -234,7 +241,7 @@ export const allowSiteCommand = {
         .setDescription('Domain to allow (e.g., example.com)')
         .setRequired(true)),
   
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     // Check if user has permission to use this command
     if (!hasPermission(interaction, 'ADMINISTRATOR')) {
       return interaction.reply({
@@ -312,6 +319,100 @@ export const allowSiteCommand = {
       logger.error('Error in allowsite command:', error);
       await interaction.reply({
         content: 'There was an error adding the domain to the allowed list. Please try again later.',
+        ephemeral: true
+      });
+    }
+  }
+};
+
+// /disallowsite command - removes a website from the allowed URLs list
+export const disallowSiteCommand = {
+  data: new SlashCommandBuilder()
+    .setName('disallowsite')
+    .setDescription('Removes a website from the allowed URLs list (Admin only)')
+    .addStringOption(option =>
+      option.setName('url')
+        .setDescription('Domain to remove (e.g., example.com)')
+        .setRequired(true)),
+  
+  async execute(interaction: ChatInputCommandInteraction) {
+    // Check if user has permission to use this command
+    if (!hasPermission(interaction, 'ADMINISTRATOR')) {
+      return interaction.reply({
+        content: 'You do not have administrator permission to use this command.',
+        ephemeral: true
+      });
+    }
+    
+    const url = interaction.options.getString('url');
+    
+    if (!url) {
+      return interaction.reply({
+        content: 'Please provide a valid domain.',
+        ephemeral: true
+      });
+    }
+    
+    // Clean the URL by removing protocol and path
+    let domain = url.toLowerCase().trim();
+    domain = domain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+    
+    try {
+      const serverId = interaction.guildId;
+      if (!serverId) {
+        return interaction.reply({
+          content: 'This command can only be used in a server.',
+          ephemeral: true
+        });
+      }
+      
+      // Get current settings
+      const settings = await storage.getSecuritySettings(serverId);
+      
+      if (!settings) {
+        return interaction.reply({
+          content: 'Security settings not found for this server.',
+          ephemeral: true
+        });
+      }
+      
+      // Check if domain is in the allowed list
+      if (!settings.allowedDomains.includes(domain)) {
+        return interaction.reply({
+          content: `The domain ${domain} is not in the allowed list.`,
+          ephemeral: true
+        });
+      }
+      
+      // Remove domain from allowed list
+      const updatedDomains = settings.allowedDomains.filter(d => d !== domain);
+      
+      // Update settings
+      await storage.updateSecuritySettings(serverId, {
+        ...settings,
+        allowedDomains: updatedDomains
+      });
+      
+      await interaction.reply({
+        content: `Removed ${domain} from the allowed domains list.`,
+        ephemeral: true
+      });
+      
+      // Log the action
+      logger.info(`User ${interaction.user.tag} removed ${domain} from allowed domains list`);
+      
+      // Record the action in security logs
+      await storage.createSecurityLog({
+        serverId,
+        eventType: 'websiteFilter',
+        action: 'Domain removed from whitelist',
+        userId: interaction.user.id,
+        details: `Removed ${domain} from allowed domains list`
+      });
+    } catch (error) {
+      logger.error('Error in disallowsite command:', error);
+      await interaction.reply({
+        content: 'There was an error removing the domain from the allowed list. Please try again later.',
         ephemeral: true
       });
     }

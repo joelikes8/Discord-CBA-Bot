@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, CommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { getRobloxUserByUsername, getRobloxGroupRanks, promoteUserInGroup } from '../services/roblox';
 import { hasPermission } from '../utils/permissions';
 import { logger } from '../utils/logger';
@@ -18,7 +18,7 @@ export const promoteCommand = {
         .setDescription('The rank to promote to')
         .setRequired(true)),
   
-  async execute(interaction: CommandInteraction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     // Check if user has permission to promote users
     if (!hasPermission(interaction, 'MANAGE_ROLES')) {
       return interaction.reply({

@@ -69,6 +69,8 @@ export const pendingVerifications = pgTable("pending_verifications", {
   discordUserId: text("discord_user_id").notNull(),
   verificationCode: text("verification_code").notNull(),
   serverId: text("server_id").notNull(),
+  pendingRobloxUsername: text("pending_roblox_username"),
+  pendingRobloxUserId: text("pending_roblox_user_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
 });

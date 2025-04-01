@@ -294,3 +294,73 @@ export async function refreshRobloxConnection(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Get a Roblox user's profile
+ * @param userId Roblox user ID
+ * @returns User profile information if found
+ */
+export async function getRobloxUserProfile(userId: number): Promise<any | null> {
+  try {
+    // Check if we're in development simulation mode
+    if (process.env.NODE_ENV !== 'production' && process.env.ROBLOX_COOKIE === undefined) {
+      // Return simulated data for development
+      return { 
+        username: await getRobloxUserById(userId) || 'TestUser',
+        displayName: 'Test User',
+        blurb: 'This is a simulated profile in development mode',
+        created: new Date().toISOString(),
+        isBanned: false,
+        externalAppDisplayName: null
+      };
+    }
+    
+    const profile = await noblox.getPlayerInfo(userId);
+    return profile;
+  } catch (error) {
+    logger.error(`Error getting Roblox user profile for ${userId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Get a user's role in the connected group
+ * @param userId Roblox user ID
+ * @returns User's role name and rank number in the group
+ */
+export async function getUserGroupRole(userId: number): Promise<{ name: string, rank: number } | null> {
+  try {
+    if (!connectedGroupId) {
+      return null;
+    }
+    
+    // Check if we're in development simulation mode
+    if (process.env.NODE_ENV !== 'production' && process.env.ROBLOX_COOKIE === undefined) {
+      // Return simulated data for development
+      return { 
+        name: 'Member',
+        rank: 1
+      };
+    }
+    
+    // Get the user's rank in the group
+    const rankId = await noblox.getRankInGroup(connectedGroupId, userId);
+    
+    if (rankId === 0) {
+      return null; // User is not in the group
+    }
+    
+    // Get the name of the rank
+    const groupRoles = await getRobloxGroupRanks();
+    const role = groupRoles.find(r => r.rank === rankId);
+    
+    if (!role) {
+      return { name: 'Unknown Rank', rank: rankId };
+    }
+    
+    return { name: role.name, rank: rankId };
+  } catch (error) {
+    logger.error(`Error getting user role in group for ${userId}:`, error);
+    return null;
+  }
+}

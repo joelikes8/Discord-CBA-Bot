@@ -1,31 +1,34 @@
-import { Client, REST, Routes, Collection, SlashCommandBuilder } from 'discord.js';
-import { verifyCommand, reverifyCommand, whoisCommand } from './verification';
+import { Client, REST, Routes, Collection, SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { verifyCommand, reverifyCommand, whoisCommand, checkVerifyCommand } from './verification';
 import { promoteCommand } from './promotion';
 import { ticketCommand, closeTicketCommand, ticketPanelCommand } from './tickets';
-import { securityStatsCommand, lockdownCommand, allowSiteCommand } from './security';
+import { securityStatsCommand, lockdownCommand, allowSiteCommand, disallowSiteCommand } from './security';
 import { logger } from '../utils/logger';
 
-// Command collection
-interface Command {
-  data: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
-  execute: (interaction: any) => Promise<void>;
+// Augment the Client interface
+declare module 'discord.js' {
+  interface Client {
+    commands: Collection<string, any>;
+  }
 }
 
 const commands = [
   verifyCommand,
   reverifyCommand,
   whoisCommand,
+  checkVerifyCommand,
   promoteCommand,
   ticketCommand,
   closeTicketCommand,
   ticketPanelCommand,
   securityStatsCommand,
   lockdownCommand,
-  allowSiteCommand
+  allowSiteCommand,
+  disallowSiteCommand
 ];
 
 export function registerCommands(client: Client) {
-  client.commands = new Collection<string, Command>();
+  client.commands = new Collection<string, any>();
   
   // Register each command in the collection
   for (const command of commands) {
@@ -35,7 +38,7 @@ export function registerCommands(client: Client) {
   
   // Handle slash commands
   client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand()) return;
+    if (!interaction.isChatInputCommand()) return;
     
     const command = client.commands.get(interaction.commandName);
     
