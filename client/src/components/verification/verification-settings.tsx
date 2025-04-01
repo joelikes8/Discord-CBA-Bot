@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
@@ -15,16 +15,22 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function VerificationSettings() {
+export default function VerificationSettingsPanel() {
   const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<string>("");
   
   const { data: settings, isLoading } = useQuery<VerificationSettings>({
     queryKey: ['/api/verification/settings'],
-    onSuccess: (data) => {
-      setSelectedRole(data.verifiedRole);
-    }
+    gcTime: 0,
+    staleTime: 0
   });
+  
+  // Set the selected role when settings data is available
+  useEffect(() => {
+    if (settings) {
+      setSelectedRole(settings.verifiedRole);
+    }
+  }, [settings]);
   
   const { data: roles, isLoading: isLoadingRoles } = useQuery<string[]>({
     queryKey: ['/api/server/roles'],

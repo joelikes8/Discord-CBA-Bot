@@ -2,7 +2,7 @@ import StatsOverview from "@/components/dashboard/stats-overview";
 import ActivityPanel from "@/components/dashboard/activity-panel";
 import CommandDocumentation from "@/components/dashboard/command-documentation";
 import SecurityFeatures from "@/components/security/security-features";
-import VerificationSettings from "@/components/verification/verification-settings";
+import VerificationSettingsPanel from "@/components/verification/verification-settings";
 import TicketWidget from "@/components/tickets/ticket-widget";
 
 export default function Dashboard() {
@@ -16,7 +16,7 @@ export default function Dashboard() {
         {/* Security features and verification settings */}
         <div className="lg:col-span-2">
           <SecurityFeatures />
-          <VerificationSettings />
+          <VerificationSettingsPanel />
         </div>
         
         {/* Activity and tickets sidebar */}

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import VerificationSettings from "@/components/verification/verification-settings";
+import VerificationSettingsPanel from "@/components/verification/verification-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ export default function Verification() {
       <h1 className="text-2xl font-bold mb-6">Roblox Verification</h1>
       
       {/* Verification settings */}
-      <VerificationSettings />
+      <VerificationSettingsPanel />
       
       {/* Verified users list */}
       <Card className="mt-6">
