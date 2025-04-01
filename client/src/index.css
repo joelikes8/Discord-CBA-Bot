@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 223 7% 20%;
+    --foreground: 220 13% 91%;
+    
+    --card: 220 7% 17%;
+    --card-foreground: 220 13% 91%;
+    
+    --popover: 220 7% 17%;
+    --popover-foreground: 220 13% 91%;
+    
+    --primary: 235 86% 65%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 217 8% 37%;
+    --secondary-foreground: 220 13% 91%;
+    
+    --muted: 217 8% 33%;
+    --muted-foreground: 215 14% 67%;
+    
+    --accent: 235 86% 65%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 86% 59%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 235 86% 65%;
+    
+    --chart-1: 235 86% 65%;
+    --chart-2: 150 86% 65%;
+    --chart-3: 60 86% 65%;
+    --chart-4: 0 86% 59%;
+    --chart-5: 270 86% 65%;
+    
+    --sidebar-background: 220 7% 13%;
+    --sidebar-foreground: 220 13% 91%;
+    --sidebar-primary: 235 86% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 235 86% 65%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 28% 17%;
+    --sidebar-ring: 235 86% 65%;
+    
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased text-foreground bg-background;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-sm;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-accent/50;
+  }
+}
+
+@layer components {
+  .sidebar-item {
+    @apply flex items-center py-2 px-4 rounded my-1 text-sidebar-foreground transition-colors;
+  }
+  
+  .sidebar-item-active {
+    @apply bg-sidebar-primary text-sidebar-primary-foreground;
+  }
+  
+  .sidebar-item-inactive {
+    @apply hover:bg-sidebar-accent/10;
+  }
+}
