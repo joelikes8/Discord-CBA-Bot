@@ -3,13 +3,16 @@
 
 const { run } = require('./server/bot/config');
 
+// IMPORTANT: Replace the placeholder values below with your actual credentials
+// before running this file
+
 // You can run with just the token
-// run('YOUR_DISCORD_BOT_TOKEN');
+// run('REPLACE_WITH_YOUR_DISCORD_BOT_TOKEN');
 
 // Or with full configuration
 run({
-  token: 'YOUR_DISCORD_BOT_TOKEN',
-  robloxCookie: 'YOUR_ROBLOX_SECURITY_COOKIE',
-  robloxGroupId: 'YOUR_ROBLOX_GROUP_ID',
+  token: 'REPLACE_WITH_YOUR_DISCORD_BOT_TOKEN', // Required
+  robloxCookie: 'REPLACE_WITH_YOUR_ROBLOX_COOKIE', // Optional
+  robloxGroupId: 'REPLACE_WITH_YOUR_GROUP_ID', // Optional
   // developmentMode: false // Set to false in production
 });
