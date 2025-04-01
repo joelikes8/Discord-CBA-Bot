@@ -3,6 +3,10 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { logger } from "./bot/utils/logger";
 import { initializeRobloxService } from "./bot/services/roblox";
+import * as dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
 
 // Set a mock Discord token for development if not provided
 if (!process.env.DISCORD_TOKEN) {
